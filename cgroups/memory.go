@@ -25,9 +25,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
-
-	"golang.org/x/sys/unix"
 )
 
 // NewMemory returns a Memory controller given the root folder of cgroups.
@@ -199,23 +196,23 @@ func (m *memoryController) Stat(path string, stats *Stats) error {
 	return nil
 }
 
-func (m *memoryController) OOMEventFD(path string) (uintptr, error) {
-	root := m.Path(path)
-	f, err := os.Open(filepath.Join(root, "memory.oom_control"))
-	if err != nil {
-		return 0, err
-	}
-	defer f.Close()
-	fd, _, serr := unix.RawSyscall(unix.SYS_EVENTFD2, 0, unix.EFD_CLOEXEC, 0)
-	if serr != 0 {
-		return 0, serr
-	}
-	if err := writeEventFD(root, f.Fd(), fd); err != nil {
-		unix.Close(int(fd))
-		return 0, err
-	}
-	return fd, nil
-}
+// func (m *memoryController) OOMEventFD(path string) (uintptr, error) {
+// 	root := m.Path(path)
+// 	f, err := os.Open(filepath.Join(root, "memory.oom_control"))
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	defer f.Close()
+// 	fd, _, serr := unix.RawSyscall(unix.SYS_EVENTFD2, 0, unix.EFD_CLOEXEC, 0)
+// 	if serr != 0 {
+// 		return 0, serr
+// 	}
+// 	if err := writeEventFD(root, f.Fd(), fd); err != nil {
+// 		unix.Close(int(fd))
+// 		return 0, err
+// 	}
+// 	return fd, nil
+// }
 
 func writeEventFD(root string, cfd, efd uintptr) error {
 	f, err := os.OpenFile(filepath.Join(root, "cgroup.event_control"), os.O_WRONLY, 0)
@@ -339,14 +336,14 @@ func getMemorySettings(resources *Resources) []memorySettings {
 }
 
 func checkEBUSY(err error) error {
-	if pathErr, ok := err.(*os.PathError); ok {
-		if errNo, ok := pathErr.Err.(syscall.Errno); ok {
-			if errNo == unix.EBUSY {
-				return fmt.Errorf(
-					"failed to set memory.kmem.limit_in_bytes, because either tasks have already joined this cgroup or it has children")
-			}
-		}
-	}
+	// if pathErr, ok := err.(*os.PathError); ok {
+	// 	if errNo, ok := pathErr.Err.(syscall.Errno); ok {
+	// 		if errNo == unix.EBUSY {
+	// 			return fmt.Errorf(
+	// 				"failed to set memory.kmem.limit_in_bytes, because either tasks have already joined this cgroup or it has children")
+	// 		}
+	// 	}
+	// }
 	return err
 }
 

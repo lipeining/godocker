@@ -1,4 +1,4 @@
-// package main
+package main
 
 // import (
 // 	"fmt"
@@ -17,7 +17,7 @@
 
 // func main() {
 
-// 	if os.Args[0] == "/proc/self/exe" {  
+// 	if os.Args[0] == "/proc/self/exe" {
 // 		//容器进程
 // 		fmt.Printf("current pid %d \n", syscall.Getpid())
 

@@ -114,7 +114,10 @@ func (c *cpuController) Stat(path string, stats *Stats) error {
 		if err != nil {
 			return err
 		}
-		logrus.Info("cpu stat: key: %s, v: %v", key, v)
+		logrus.WithFields(logrus.Fields{
+			"key": key,
+			"v":   v,
+		}).Info("cpu stat: key:, v:")
 		switch key {
 		case "nr_periods":
 			stats.CPU.Throttling.Periods = v
