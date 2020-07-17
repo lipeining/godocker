@@ -16,7 +16,10 @@
 
 package cgroups
 
-import "testing"
+import (
+	"path/filepath"
+	"testing"
+)
 
 func TestNamedNameValue(t *testing.T) {
 	n := NewNamed("/sys/fs/cgroup", "systemd")
@@ -28,7 +31,7 @@ func TestNamedNameValue(t *testing.T) {
 func TestNamedPath(t *testing.T) {
 	n := NewNamed("/sys/fs/cgroup", "systemd")
 	path := n.Path("/test")
-	if expected := "/sys/fs/cgroup/systemd/test"; path != expected {
+	if expected := filepath.Join("/sys/fs/cgroup/systemd/test"); path != expected {
 		t.Fatalf("expected %q but received %q from named cgroup", expected, path)
 	}
 }

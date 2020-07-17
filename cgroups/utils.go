@@ -48,6 +48,7 @@ func getMountPoint() (string, error) {
 			postSeparatorFields = strings.Fields(text[index+3:])
 			numPostFields       = len(postSeparatorFields)
 		)
+		// format strings:
 		// 26 23 0:22 / /sys/fs/cgroup/cpuset rw,nosuid,nodev,noexec,relatime shared:13 - cgroup cgroup rw,cpuset
 		// postSeparatorFields = ["cgroup", "cgroup", "rw,cpuset"]
 		// filepath.Dir(fields[4]) = filepath.Dir(/sys/fs/cgroup/cpuset) = /sys/fs/cgroup

@@ -6,13 +6,19 @@ CGO_ENABLED: 0
 GOOS: linux
 GOARCH: amd64
 ```
+```shell
+go env -w CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+go env -w CGO_ENABLED=1 GOOS=windows GOARCH=amd64
+```
 在容器中进行
 ```sh
 go build main.go
 ./main --flag
 ```
-学习的项目[containerd](https://github.com/containerd/containerd)
-[go-docker](https://github.com/pibigstar/go-docker/)
+学习的项目
+- [containerd](https://github.com/containerd/containerd)
+- [runc](https://github.com/opencontainers/runc)
+- [go-docker](https://github.com/pibigstar/go-docker/)
 
 
 ## syscall
@@ -123,6 +129,16 @@ container 是一个进程与相关的文件，需要管理 cmd.Start() 对应的
 和对应的文件信息。
 那么删除一个 docker 时，是否需要删除对应的 task 和对应的 limit 设置呢？
 可以不处理，但是，会产生很多冗余的数据，会污染新生成的数据吗？
+
+Because containers are spawned in a two step process you will need a binary that
+will be executed as the init process for the container. In libcontainer, we use
+the current binary (/proc/self/exe) to be executed as the init process, and use
+arg "init", we call the first step process "bootstrap", so you always need a "init"
+function as the entry of "bootstrap".
+
+生成 parent, child socket pair, 对应 init 命令。
+内部通过变量  _LIBCONTAINER_INITPIPE 等环境变量和
+通过 parent, child 管道写入 pid cmd 的方式启动进程。
 
 
 ## log
