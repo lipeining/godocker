@@ -4,8 +4,6 @@ import (
 	"os"
 	"sync"
 	"time"
-
-	"github.com/lipeining/godocker/configs"
 )
 
 // BaseContainer is a libcontainer container object.
@@ -158,39 +156,46 @@ type Container interface {
 	// ContainerNotPaused - Container is not paused,
 	// Systemerror - System error.
 	Resume() error
-
-	// NotifyOOM returns a read-only channel signaling when the container receives an OOM notification.
-	//
-	// errors:
-	// Systemerror - System error.
-	NotifyOOM() (<-chan struct{}, error)
-
-	// // NotifyMemoryPressure returns a read-only channel signaling when the container reaches a given pressure level
-	// //
-	// // errors:
-	// // Systemerror - System error.
-	// NotifyMemoryPressure(level PressureLevel) (<-chan struct{}, error)
 }
 
 type linuxContainer struct {
-	id     string
-	root   string
-	config *configs.Config
+	id   string
+	root string
 	// cgroupManager        cgroups.Manager
-	// intelRdtManager      intelrdt.Manager
-	initPath string
-	initArgs []string
-	// initProcess          parentProcess
-	initProcessStartTime uint64
-	criuPath             string
-	newuidmapPath        string
-	newgidmapPath        string
-	m                    sync.Mutex
-	criuVersion          int
-	// state                containerState
-	created time.Time
+	initPath    string
+	initArgs    []string
+	initProcess InitProcess
+	m           sync.Mutex
+	created     time.Time
 }
 
+func (l *linuxContainer) ID() string {
+	return l.id
+}
+func (l *linuxContainer) Processes() ([]int, error) {
+	return nil, nil
+}
+func (l *linuxContainer) Start(process *Process) error {
+	return nil
+}
+func (l *linuxContainer) Run(process *Process) error {
+	return nil
+}
+func (l *linuxContainer) Destroy() error {
+	return nil
+}
+func (l *linuxContainer) Signal(s os.Signal, all bool) error {
+	return nil
+}
+func (l *linuxContainer) Exec() error {
+	return nil
+}
+func (l *linuxContainer) Pause() error {
+	return nil
+}
+func (l *linuxContainer) Resume() error {
+	return nil
+}
 func startContainer() {
 
 }
