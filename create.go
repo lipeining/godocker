@@ -53,9 +53,6 @@ command(s) that get executed on start, edit the args parameter of the spec. See
 		// if err := checkArgs(context, 1, exactArgs); err != nil {
 		// 	return err
 		// }
-		// if err := revisePidFile(context); err != nil {
-		// 	return err
-		// }
 		// spec, err := setupSpec(context)
 		// if err != nil {
 		// 	return err

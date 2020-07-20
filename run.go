@@ -31,42 +31,49 @@ command(s) that get executed on start, edit the args parameter of the spec. See
 			Value: "",
 			Usage: `path to the root of the bundle directory, defaults to the current directory`,
 		},
-		cli.StringFlag{
-			Name:  "console-socket",
-			Value: "",
-			Usage: "path to an AF_UNIX socket which will receive a file descriptor referencing the master end of the console's pseudoterminal",
-		},
 		cli.BoolFlag{
 			Name:  "detach, d",
 			Usage: "detach from the container's process",
 		},
+		cli.BoolFlag{
+			Name:  "tty, it",
+			Usage: "tty from the container's process",
+		},
 		cli.StringFlag{
-			Name:  "pid-file",
-			Value: "",
-			Usage: "specify the file to write the process id to",
+			Name:  "root",
+			Usage: "container root",
 		},
-		cli.BoolFlag{
-			Name:  "no-subreaper",
-			Usage: "disable the use of the subreaper used to reap reparented processes",
+		cli.StringFlag{
+			Name:  "v",
+			Usage: "docker volume",
 		},
-		cli.BoolFlag{
-			Name:  "no-pivot",
-			Usage: "do not use pivot root to jail process inside rootfs.  This should be used whenever the rootfs is on top of a ramdisk",
+		cli.StringSliceFlag{
+			Name:  "e",
+			Usage: "docker env",
 		},
-		cli.BoolFlag{
-			Name:  "no-new-keyring",
-			Usage: "do not create a new session keyring for the container.  This will cause the container to inherit the calling processes session key",
+		cli.StringFlag{
+			Name:  "net",
+			Usage: "container network",
 		},
-		cli.IntFlag{
-			Name:  "preserve-fds",
-			Usage: "Pass N additional file descriptors to the container (stdio + $LISTEN_FDS + N in total)",
+		cli.StringSliceFlag{
+			Name:  "p",
+			Usage: "port mapping",
+		},
+		cli.StringFlag{
+			Name:  "name",
+			Usage: "container name",
+		},
+		cli.StringFlag{
+			Name:  "cwd",
+			Usage: "container cwd",
+		},
+		cli.StringFlag{
+			Name:  "id",
+			Usage: "container id",
 		},
 	},
 	Action: func(context *cli.Context) error {
-		if err := checkArgs(context, 1, exactArgs); err != nil {
-			return err
-		}
-		if err := revisePidFile(context); err != nil {
+		if err := checkArgs(context, 1, minArgs); err != nil {
 			return err
 		}
 		status, err := startContainer(context)

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/opencontainers/runc/libcontainer/label"
 	"golang.org/x/sys/unix"
 )
 
@@ -132,3 +133,18 @@ func readonlyPath(path string) error {
 // 	}
 // 	return fmt.Errorf("unable to mount %s as readonly max retries reached", dest)
 // }
+
+// maskPath masks the top of the specified path inside a container to avoid
+// security issues from processes reading information from non-namespace aware
+// mounts ( proc/kcore ).
+// For files, maskPath bind mounts /dev/null over the top of the specified path.
+// For directories, maskPath mounts read-only tmpfs over the top of the specified path.
+func maskPath(path string, mountLabel string) error {
+	if err := unix.Mount("/dev/null", path, "", unix.MS_BIND, ""); err != nil && !os.IsNotExist(err) {
+		if err == unix.ENOTDIR {
+			return unix.Mount("tmpfs", path, "tmpfs", unix.MS_RDONLY, label.FormatMountLabel("", mountLabel))
+		}
+		return err
+	}
+	return nil
+}

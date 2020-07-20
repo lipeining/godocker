@@ -89,9 +89,6 @@ following will output a list of processes running in the container:
 		// if err := checkArgs(context, 1, minArgs); err != nil {
 		// 	return err
 		// }
-		// if err := revisePidFile(context); err != nil {
-		// 	return err
-		// }
 		// status, err := execProcess(context)
 		// if err == nil {
 		// 	os.Exit(status)
