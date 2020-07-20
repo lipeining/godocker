@@ -3,6 +3,7 @@ package container
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"runtime/debug"
 	"strconv"
 
@@ -13,6 +14,8 @@ import (
 const (
 	stateFilename = "state.json"
 )
+
+var idRegex = regexp.MustCompile(`^[\w+-\.]+$`)
 
 type Factory interface {
 	// Creates a new container with the given id and starts the initial process inside it.
@@ -89,24 +92,20 @@ type LinuxFactory struct {
 	// InitArgs are arguments for calling the init responsibilities for spawning
 	// a container.
 	InitArgs []string
-
-	// CriuPath is the path to the criu binary used for checkpoint and restore of
-	// containers.
-	CriuPath string
 }
 
 func (l *LinuxFactory) Create(id string) (Container, error) {
 	if l.Root == "" {
 		return nil, nil
 	}
-	// if err := l.validateID(id); err != nil {
-	// 	return nil, err
-	// }
+	if err := l.validateID(id); err != nil {
+		return nil, err
+	}
 	containerRoot, err := securejoin.SecureJoin(l.Root, id)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := os.Stat(containerRoot); err == nil {
+	if _, err := os.Stat(containerRoot); err != nil {
 		return nil, err
 	} else if !os.IsNotExist(err) {
 		return nil, err
@@ -130,10 +129,9 @@ func (l *LinuxFactory) Load(id string) (Container, error) {
 	if l.Root == "" {
 		return nil, nil
 	}
-	//when load, we need to check id is valid or not.
-	// if err := l.validateID(id); err != nil {
-	// 	return nil, err
-	// }
+	if err := l.validateID(id); err != nil {
+		return nil, err
+	}
 	containerRoot, err := securejoin.SecureJoin(l.Root, id)
 	if err != nil {
 		return nil, err
@@ -238,4 +236,12 @@ func (l *LinuxFactory) loadState(root, id string) (error, error) {
 	// 	return nil, newGenericError(err, SystemError)
 	// }
 	// return state, nil
+}
+
+func (l *LinuxFactory) validateID(id string) error {
+	if !idRegex.MatchString(id) {
+		return fmt.Errorf("invalid id format: %v", id)
+	}
+
+	return nil
 }

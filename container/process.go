@@ -18,7 +18,7 @@ type Process struct {
 	// Cwd will change the processes current working directory inside the container's rootfs.
 	Cwd string
 
-	// Init 
+	// Init
 	Init bool
 }
 
