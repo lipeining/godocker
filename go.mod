@@ -4,8 +4,6 @@ go 1.13
 
 require (
 	github.com/cyphar/filepath-securejoin v0.2.2
-	github.com/docker/docker v1.13.1 // indirect
-	github.com/opencontainers/runc v0.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/urfave/cli v1.22.4

@@ -3,8 +3,10 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
-	"strings"
+	"fmt"
+	"os"
 
 	"github.com/urfave/cli"
 )
@@ -21,88 +23,35 @@ var psCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		// if err := checkArgs(context, 1, minArgs); err != nil {
-		// 	return err
-		// }
-		// rootlessCg, err := shouldUseRootlessCgroupManager(context)
-		// if err != nil {
-		// 	return err
-		// }
-		// if rootlessCg {
-		// 	logrus.Warn("runc ps may fail if you don't have the full access to cgroups")
-		// }
-
-		// container, err := getContainer(context)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// pids, err := container.Processes()
-		// if err != nil {
-		// 	return err
-		// }
-
-		// switch context.String("format") {
-		// case "table":
-		// case "json":
-		// 	return json.NewEncoder(os.Stdout).Encode(pids)
-		// default:
-		// 	return errors.New("invalid format option")
-		// }
-
-		// // [1:] is to remove command name, ex:
-		// // context.Args(): [container_id ps_arg1 ps_arg2 ...]
-		// // psArgs:         [ps_arg1 ps_arg2 ...]
-		// //
-		// psArgs := context.Args()[1:]
-		// if len(psArgs) == 0 {
-		// 	psArgs = []string{"-ef"}
-		// }
-
-		// cmd := exec.Command("ps", psArgs...)
-		// output, err := cmd.CombinedOutput()
-		// if err != nil {
-		// 	return fmt.Errorf("%s: %s", err, output)
-		// }
-
-		// lines := strings.Split(string(output), "\n")
-		// pidIndex, err := getPidIndex(lines[0])
-		// if err != nil {
-		// 	return err
-		// }
-
-		// fmt.Println(lines[0])
-		// for _, line := range lines[1:] {
-		// 	if len(line) == 0 {
-		// 		continue
-		// 	}
-		// 	fields := strings.Fields(line)
-		// 	p, err := strconv.Atoi(fields[pidIndex])
-		// 	if err != nil {
-		// 		return fmt.Errorf("unexpected pid '%s': %s", fields[pidIndex], err)
-		// 	}
-
-		// 	for _, pid := range pids {
-		// 		if pid == p {
-		// 			fmt.Println(line)
-		// 			break
-		// 		}
-		// 	}
-		// }
+		if err := checkArgs(context, 1, minArgs); err != nil {
+			return err
+		}
+		c, err := getContainer(context, context.Args().First())
+		if err != nil {
+			return err
+		}
+		fmt.Println(c)
+		containerState, err := c.CurrentState()
+		if err != nil {
+			return err
+		}
+		containerStatus, err := c.CurrentStatus()
+		if err != nil {
+			return err
+		}
+		switch context.String("format") {
+		case "table":
+		case "json":
+			if err := json.NewEncoder(os.Stdout).Encode(containerState); err != nil {
+				return err
+			}
+			if err := json.NewEncoder(os.Stdout).Encode(containerStatus.String()); err != nil {
+				return err
+			}
+		default:
+			return errors.New("invalid format option")
+		}
 		return nil
 	},
 	SkipArgReorder: true,
-}
-
-func getPidIndex(title string) (int, error) {
-	titles := strings.Fields(title)
-
-	pidIndex := -1
-	for i, name := range titles {
-		if name == "PID" {
-			return i, nil
-		}
-	}
-
-	return pidIndex, errors.New("couldn't find PID field in ps output")
 }

@@ -17,22 +17,14 @@ paused. `,
 
 Use runc list to identify instances of containers and their current status.`,
 	Action: func(context *cli.Context) error {
-		return nil
-		// if err := checkArgs(context, 1, exactArgs); err != nil {
-		// 	return err
-		// }
-		// rootlessCg, err := shouldUseRootlessCgroupManager(context)
-		// if err != nil {
-		// 	return err
-		// }
-		// if rootlessCg {
-		// 	logrus.Warnf("runc pause may fail if you don't have the full access to cgroups")
-		// }
-		// container, err := getContainer(context)
-		// if err != nil {
-		// 	return err
-		// }
-		// return container.Pause()
+		if err := checkArgs(context, 1, exactArgs); err != nil {
+			return err
+		}
+		c, err := getContainer(context, context.Args().First())
+		if err != nil {
+			return err
+		}
+		return c.Pause()
 	},
 }
 
@@ -47,21 +39,13 @@ resumed.`,
 
 Use runc list to identify instances of containers and their current status.`,
 	Action: func(context *cli.Context) error {
-		return nil
-		// if err := checkArgs(context, 1, exactArgs); err != nil {
-		// 	return err
-		// }
-		// rootlessCg, err := shouldUseRootlessCgroupManager(context)
-		// if err != nil {
-		// 	return err
-		// }
-		// if rootlessCg {
-		// 	logrus.Warn("runc resume may fail if you don't have the full access to cgroups")
-		// }
-		// container, err := getContainer(context)
-		// if err != nil {
-		// 	return err
-		// }
-		// return container.Resume()
+		if err := checkArgs(context, 1, exactArgs); err != nil {
+			return err
+		}
+		c, err := getContainer(context, context.Args().First())
+		if err != nil {
+			return err
+		}
+		return c.Resume()
 	},
 }

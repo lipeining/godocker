@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	// _ "github.com/lipeining/godocker/nsenter"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
@@ -88,23 +89,14 @@ func main() {
 		},
 	}
 	app.Commands = []cli.Command{
-		// checkpointCommand,
-		// createCommand,
-		// deleteCommand,
-		// eventsCommand,
-		// execCommand,
+		deleteCommand,
+		execCommand,
 		initCommand,
-		// killCommand,
-		// listCommand,
-		// pauseCommand,
-		// psCommand,
-		// restoreCommand,
-		// resumeCommand,
-		// runCommand,
-		// specCommand,
-		// startCommand,
-		// stateCommand,
-		// updateCommand,
+		killCommand,
+		listCommand,
+		pauseCommand,
+		psCommand,
+		runCommand,
 	}
 	app.Before = func(context *cli.Context) error {
 		logrus.SetFormatter(&logrus.JSONFormatter{})

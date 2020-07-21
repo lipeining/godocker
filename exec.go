@@ -3,6 +3,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/urfave/cli"
 )
 
@@ -86,9 +88,10 @@ following will output a list of processes running in the container:
 		},
 	},
 	Action: func(context *cli.Context) error {
-		// if err := checkArgs(context, 1, minArgs); err != nil {
-		// 	return err
-		// }
+		if err := checkArgs(context, 1, minArgs); err != nil {
+			return err
+		}
+		fmt.Print(context.Args())
 		// status, err := execProcess(context)
 		// if err == nil {
 		// 	os.Exit(status)

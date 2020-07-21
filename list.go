@@ -3,8 +3,17 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"text/tabwriter"
 	"time"
 
+	"github.com/lipeining/godocker/container"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
@@ -21,16 +30,10 @@ type containerState struct {
 	InitProcessPid int `json:"pid"`
 	// Status is the current status of the container, running, paused, ...
 	Status string `json:"status"`
-	// Bundle is the path on the filesystem to the bundle
-	Bundle string `json:"bundle"`
 	// Rootfs is a path to a directory containing the container's root filesystem.
 	Rootfs string `json:"rootfs"`
 	// Created is the unix timestamp for the creation time of the container in UTC
 	Created time.Time `json:"created"`
-	// Annotations is the user defined annotations added to the config.
-	Annotations map[string]string `json:"annotations,omitempty"`
-	// The owner of the state directory (the owner of the container).
-	Owner string `json:"owner"`
 }
 
 var listCommand = cli.Command{
@@ -60,48 +63,91 @@ To list containers created using a non-default value for "--root":
 		},
 	},
 	Action: func(context *cli.Context) error {
-		// if err := checkArgs(context, 0, exactArgs); err != nil {
-		// 	return err
-		// }
-		// s, err := getContainers(context)
-		// if err != nil {
-		// 	return err
-		// }
+		if err := checkArgs(context, 0, exactArgs); err != nil {
+			return err
+		}
+		s, err := getContainers(context)
+		if err != nil {
+			return err
+		}
 
-		// if context.Bool("quiet") {
-		// 	for _, item := range s {
-		// 		fmt.Println(item.ID)
-		// 	}
-		// 	return nil
-		// }
+		if context.Bool("quiet") {
+			for _, item := range s {
+				fmt.Println(item.ID)
+			}
+			return nil
+		}
 
-		// switch context.String("format") {
-		// case "table":
-		// 	w := tabwriter.NewWriter(os.Stdout, 12, 1, 3, ' ', 0)
-		// 	fmt.Fprint(w, "ID\tPID\tSTATUS\tBUNDLE\tCREATED\tOWNER\n")
-		// 	for _, item := range s {
-		// 		fmt.Fprintf(w, "%s\t%d\t%s\t%s\t%s\t%s\n",
-		// 			item.ID,
-		// 			item.InitProcessPid,
-		// 			item.Status,
-		// 			item.Bundle,
-		// 			item.Created.Format(time.RFC3339Nano),
-		// 			item.Owner)
-		// 	}
-		// 	if err := w.Flush(); err != nil {
-		// 		return err
-		// 	}
-		// case "json":
-		// 	if err := json.NewEncoder(os.Stdout).Encode(s); err != nil {
-		// 		return err
-		// 	}
-		// default:
-		// 	return errors.New("invalid format option")
-		// }
+		switch context.String("format") {
+		case "table":
+			w := tabwriter.NewWriter(os.Stdout, 12, 1, 3, ' ', 0)
+			fmt.Fprint(w, "ID\tPID\tSTATUS\tCREATED\n")
+			for _, item := range s {
+				fmt.Fprintf(w, "%s\t%d\t%s\t%s\n",
+					item.ID,
+					item.InitProcessPid,
+					item.Status,
+					item.Created.Format(time.RFC3339Nano))
+			}
+			if err := w.Flush(); err != nil {
+				return err
+			}
+		case "json":
+			if err := json.NewEncoder(os.Stdout).Encode(s); err != nil {
+				return err
+			}
+		default:
+			return errors.New("invalid format option")
+		}
 		return nil
 	},
 }
 
 func getContainers(context *cli.Context) ([]containerState, error) {
-	return nil, nil
+	root := context.GlobalString("root")
+	absRoot, err := filepath.Abs(root)
+	if err != nil {
+		return nil, err
+	}
+	list, err := ioutil.ReadDir(absRoot)
+	if err != nil {
+		logrus.Error(err)
+		os.Exit(-1)
+		return nil, err
+	}
+
+	var s []containerState
+	for _, item := range list {
+		if item.IsDir() {
+			// This cast is safe on Linux.
+			c, err := getContainer(context, item.Name())
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "load container %s: %v\n", item.Name(), err)
+				continue
+			}
+			containerStatus, err := c.CurrentStatus()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "status for %s: %v\n", item.Name(), err)
+				continue
+			}
+			state, err := c.CurrentState()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "state for %s: %v\n", item.Name(), err)
+				continue
+			}
+			pid := state.BaseState.InitProcessPid
+			if containerStatus == container.Stopped {
+				pid = 0
+			}
+			s = append(s, containerState{
+				Version:        state.BaseState.Config.Version,
+				ID:             state.BaseState.ID,
+				InitProcessPid: pid,
+				Status:         containerStatus.String(),
+				Rootfs:         state.BaseState.Config.Rootfs,
+				Created:        state.BaseState.Created,
+			})
+		}
+	}
+	return s, nil
 }

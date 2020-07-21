@@ -269,6 +269,57 @@ func startContainer(context *cli.Context) (int, error) {
 	return 0, nil
 }
 
+func getContainer(context *cli.Context, id string) (*container.Container, error) {
+	if id == "" {
+		return nil, errEmptyID
+	}
+	root := context.GlobalString("root")
+	if root == "" {
+		return nil, fmt.Errorf("invalid root")
+	}
+	containerRoot, err := securejoin.SecureJoin(root, id)
+	if err != nil {
+		return nil, err
+	}
+	state, err := loadState(containerRoot, id)
+	if err != nil {
+		return nil, err
+	}
+	c := &container.Container{
+		InitProcess: container.InitProcess{},
+		Id:          id,
+		Config:      &state.Config,
+		InitPath:    "/proc/self/exe",
+		InitArgs:    []string{"init"},
+		Root:        containerRoot,
+		Created:     state.Created,
+	}
+	if err := c.RefreshState(); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+func loadState(root, id string) (*container.State, error) {
+	stateFilePath, err := securejoin.SecureJoin(root, container.StateFilename)
+	if err != nil {
+		return nil, err
+	}
+	f, err := os.Open(stateFilePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("container %q does not exist", id)
+		}
+		return nil, err
+	}
+	defer f.Close()
+	var state *container.State
+	if err := json.NewDecoder(f).Decode(&state); err != nil {
+		return nil, err
+	}
+	return state, nil
+}
+
 var idRegex = regexp.MustCompile(`^[\w+-\.]+$`)
 
 func validateID(id string) error {

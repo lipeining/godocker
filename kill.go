@@ -31,28 +31,29 @@ signal to the init process of the "ubuntu01" container:
 		},
 	},
 	Action: func(context *cli.Context) error {
-		return nil
-		// if err := checkArgs(context, 1, minArgs); err != nil {
-		// 	return err
-		// }
-		// if err := checkArgs(context, 2, maxArgs); err != nil {
-		// 	return err
-		// }
-		// container, err := getContainer(context)
-		// if err != nil {
-		// 	return err
-		// }
 
-		// sigstr := context.Args().Get(1)
-		// if sigstr == "" {
-		// 	sigstr = "SIGTERM"
-		// }
+		if err := checkArgs(context, 1, minArgs); err != nil {
+			return err
+		}
+		if err := checkArgs(context, 2, maxArgs); err != nil {
+			return err
+		}
+		c, err := getContainer(context, context.Args().First())
+		if err != nil {
+			return err
+		}
 
-		// signal, err := parseSignal(sigstr)
-		// if err != nil {
-		// 	return err
-		// }
-		// return container.Signal(signal, context.Bool("all"))
+		sigstr := context.Args().Get(1)
+		if sigstr == "" {
+			sigstr = "SIGTERM"
+		}
+
+		signal, err := parseSignal(sigstr)
+		if err != nil {
+			return err
+		}
+		fmt.Println(signal)
+		return c.Signal(signal, context.Bool("all"))
 	},
 }
 

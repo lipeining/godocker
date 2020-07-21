@@ -1,6 +1,7 @@
 package container
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -91,7 +92,9 @@ func NewInitProcess(process *Process, containerName string) (*InitProcess, error
 	cmd.ExtraFiles = []*os.File{
 		readPipe,
 	}
+	stdioFdCount := 3
 	cmd.Env = append(os.Environ(), process.Env...)
+	cmd.Env = append(cmd.Env, fmt.Sprintf("_LIBCONTAINER_INITPIPE=%d", stdioFdCount+len(cmd.ExtraFiles)-1))
 	cmd.Dir = process.Cwd
 	return &InitProcess{
 		cmd:             cmd,
