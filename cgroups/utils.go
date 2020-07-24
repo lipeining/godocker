@@ -17,6 +17,7 @@ package cgroups
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -24,6 +25,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -233,4 +235,77 @@ func cleanPath(path string) string {
 		path, _ = filepath.Rel(string(os.PathSeparator), filepath.Clean(string(os.PathSeparator)+path))
 	}
 	return filepath.Clean(path)
+}
+
+// readPids will read all the pids of processes in a cgroup by the provided path
+func readPids(path string, subsystem Name) ([]Process, error) {
+	f, err := os.Open(filepath.Join(path, cgroupProcs))
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	var (
+		out []Process
+		s   = bufio.NewScanner(f)
+	)
+	for s.Scan() {
+		if t := s.Text(); t != "" {
+			pid, err := strconv.Atoi(t)
+			if err != nil {
+				return nil, err
+			}
+			out = append(out, Process{
+				Pid:       pid,
+				Subsystem: subsystem,
+				Path:      path,
+			})
+		}
+	}
+	if err := s.Err(); err != nil {
+		// failed to read all pids?
+		return nil, err
+	}
+	return out, nil
+}
+
+// readTasksPids will read all the pids of tasks in a cgroup by the provided path
+func readTasksPids(path string, subsystem Name) ([]Task, error) {
+	f, err := os.Open(filepath.Join(path, cgroupTasks))
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	var (
+		out []Task
+		s   = bufio.NewScanner(f)
+	)
+	for s.Scan() {
+		if t := s.Text(); t != "" {
+			pid, err := strconv.Atoi(t)
+			if err != nil {
+				return nil, err
+			}
+			out = append(out, Task{
+				Pid:       pid,
+				Subsystem: subsystem,
+				Path:      path,
+			})
+		}
+	}
+	if err := s.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+func retryingWriteFile(path string, data []byte, mode os.FileMode) error {
+	// Retry writes on EINTR; see:
+	//    https://github.com/golang/go/issues/38033
+	for {
+		err := ioutil.WriteFile(path, data, mode)
+		if err == nil {
+			return nil
+		} else if !errors.Is(err, syscall.EINTR) {
+			return err
+		}
+	}
 }

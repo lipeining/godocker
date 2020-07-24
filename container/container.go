@@ -109,7 +109,7 @@ type Container struct {
 	Name          string
 	Root          string
 	Config        *configs.Config
-	cgroupManager cgroups.Manager
+	cgroupManager *cgroups.Manager
 	InitPath      string
 	InitArgs      []string
 	InitProcess   InitProcess
@@ -118,7 +118,7 @@ type Container struct {
 	Created       time.Time
 }
 
-func NewContainer(context *cli.Context, config *configs.Config, cgroupManager cgroups.Manager) (*Container, error) {
+func NewContainer(context *cli.Context, config *configs.Config, cgroupManager *cgroups.Manager) (*Container, error) {
 	return &Container{
 		Id:            context.String("id"),
 		Name:          context.String("name"),
@@ -414,7 +414,8 @@ func Initialization(pipe *os.File) (err error) {
 	}
 	// // Close the pipe to signal that we have completed our init.
 	// pipe.Close()
-	return unix.Exec(config.Args[0], config.Args[0:], os.Environ())
+	// return unix.Exec(config.Args[0], config.Args[0:], os.Environ())
+	return syscall.Exec(config.Args[0], config.Args[0:], os.Environ())
 }
 func setUpMount(config *initConfig) error {
 	err := pivotRoot(config.Config.Rootfs)

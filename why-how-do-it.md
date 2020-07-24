@@ -105,6 +105,47 @@ Cgroup完成资源限制主要通过下面三个组件
 2.在 /sys/fs/cgroup 中构建项目的专用文件路径 /sys/fs/cgroup/godocker/:containerId/memory 等等
 3.通过写入文件的方式，控制 cgroup 的资源。
 
+
+## read write layer
+默认全局定义的的存放 image 的目录为：
+/root/busybox.tar
+解压为
+/root/busybox
+
+writelayer 为
+/root/writelayer/:containerName
+
+挂载点为
+/root/mnt
+
+挂载目录为 
+dirs := fmt.Sprintf("dirs=%s:%s", writeLayPath, imagePath)
+mount", "-t", "aufs", "-o", dirs, "none", mntPath
+
+对应创建的 volume 为 out-path:in-path
+需要挂载在 mntPath := MntPath+containerName+in-path
+
+但是 pivoRoot 那里怎么确定需要重新挂载的 root  节点呢？
+
+把 write layer container iit layer 和相 关镜
+像的 layers mount mnt 目录下，然后把这个 mnt 目录作为容器启动的根目录
+CreateReadOnlyLayer 函数新建 busybox 文件夹，将 busybox .tar 解压到 busybox 目录下，
+作为容器的只读层。
+CreateWriteLayer 函数创建了 个名为 writeLayer 的文件夹，作为容器唯 的可写层。
+。在 CreateMountPoint 函数中，首先创建了 nt 文件夹，作为挂载点，然后把 writeLayer
+目录 busybox mount mnt 目录下。
+mnt
+最后 NewParentProcess 函数中将容器使用的宿主机目录 root/busybox 替换成／root/
+
+
+在容器退出 的时候 删除 Write Layer DeleteWorkSpace 函数
+包括 DeleteMountPoint DeleteWriteLayer
+。首先，在 DeleteMountPoint 函数中 umountmnt 目录
+。然后，删除 mnt 目录。
+。最后，在 DeleteWriteLayer 函数中删除 writeLayer 文件夹 这样容器对文件系统的更改
+就都己经抹去了。
+
+
 ## volumes
 普通的卷挂载是基本同 cgroup 的挂载读写层，只读层
 ```go

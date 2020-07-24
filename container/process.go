@@ -31,7 +31,7 @@ type filePair struct {
 
 type InitProcess struct {
 	cmd             *exec.Cmd
-	manager         cgroups.Manager
+	manager         *cgroups.Manager
 	messageSockPair filePair
 	process         *Process
 }
@@ -53,7 +53,7 @@ func NewProcess(args, env []string, cwd string) *Process {
 }
 
 // NewInitProcess create a process to init
-func NewInitProcess(process *Process, containerName string) (*InitProcess, error) {
+func NewInitProcess(process *Process, c *Container) (*InitProcess, error) {
 	readPipe, writePipe, err := os.Pipe()
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func NewInitProcess(process *Process, containerName string) (*InitProcess, error
 		cmd.Stderr = os.Stderr
 	} else {
 		// 把日志输出到文件里
-		logDir := filepath.Join(defaultContainerInfoPath, containerName)
+		logDir := filepath.Join(defaultContainerInfoPath, c.Name)
 		if _, err := os.Stat(logDir); err != nil && os.IsNotExist(err) {
 			err := os.MkdirAll(logDir, os.ModePerm)
 			if err != nil {
@@ -99,6 +99,7 @@ func NewInitProcess(process *Process, containerName string) (*InitProcess, error
 	return &InitProcess{
 		cmd:             cmd,
 		messageSockPair: filePair{readPipe, writePipe},
+		manager:         c.cgroupManager,
 		process:         process,
 	}, nil
 }

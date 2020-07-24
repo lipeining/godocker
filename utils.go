@@ -245,7 +245,7 @@ func createContainer(context *cli.Context) (*container.Container, error) {
 	if err != nil {
 		return nil, err
 	}
-	cgroupManager, err := cgroups.NewManager(config)
+	cgroupManager, err := cgroups.NewManager(id, config)
 	if err != nil {
 		return nil, err
 	}
@@ -258,11 +258,16 @@ func startContainer(context *cli.Context) (int, error) {
 		return -1, err
 	}
 	process := newProcess(context)
-	initProcess, err := container.NewInitProcess(process, c.Name)
+	initProcess, err := container.NewInitProcess(process, c)
 	if err != nil {
 		return -1, err
 	}
 	fmt.Println(c, initProcess)
+	// 创建对应的 roofs system
+	imageName := "busybox"
+	if err := container.NewWorkSpace(c, imageName); err != nil {
+		return -1, err
+	}
 	if err := c.StartInit(initProcess); err != nil {
 		return -1, err
 	}
