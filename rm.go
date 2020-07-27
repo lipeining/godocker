@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/lipeining/godocker/container"
 	"github.com/urfave/cli"
 )
 
@@ -21,6 +22,11 @@ var rmCommand = cli.Command{
 			return err
 		}
 		fmt.Println(c)
+		if err := c.DeleteState(); err != nil {
+			return err
+		}
+		// 删除 workspace
+		container.DeleteWorkSpace(c.Name, "")
 		return nil
 	},
 	SkipArgReorder: true,

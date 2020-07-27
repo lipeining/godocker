@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/urfave/cli"
 )
@@ -92,60 +93,10 @@ following will output a list of processes running in the container:
 			return err
 		}
 		fmt.Print(context.Args())
-		// status, err := execProcess(context)
-		// if err == nil {
-		// 	os.Exit(status)
-		// }
-		// return fmt.Errorf("exec failed: %v", err)
-		return nil
+		if pid := os.Getenv("EnvExecPid"); pid != "" {
+			return nil
+		}
+		return execContainer(context)
 	},
 	SkipArgReorder: true,
-}
-
-func execProcess(context *cli.Context) (int, error) {
-	return 0, nil
-	// container, err := getContainer(context)
-	// if err != nil {
-	// 	return -1, err
-	// }
-	// status, err := container.Status()
-	// if err != nil {
-	// 	return -1, err
-	// }
-	// if status == libcontainer.Stopped {
-	// 	return -1, fmt.Errorf("cannot exec a container that has stopped")
-	// }
-	// path := context.String("process")
-	// if path == "" && len(context.Args()) == 1 {
-	// 	return -1, fmt.Errorf("process args cannot be empty")
-	// }
-	// detach := context.Bool("detach")
-	// state, err := container.State()
-	// if err != nil {
-	// 	return -1, err
-	// }
-	// bundle := utils.SearchLabels(state.Config.Labels, "bundle")
-	// p, err := getProcess(context, bundle)
-	// if err != nil {
-	// 	return -1, err
-	// }
-
-	// logLevel := "info"
-	// if context.GlobalBool("debug") {
-	// 	logLevel = "debug"
-	// }
-
-	// r := &runner{
-	// 	enableSubreaper: false,
-	// 	shouldDestroy:   false,
-	// 	container:       container,
-	// 	consoleSocket:   context.String("console-socket"),
-	// 	detach:          detach,
-	// 	pidFile:         context.String("pid-file"),
-	// 	action:          CT_ACT_RUN,
-	// 	init:            false,
-	// 	preserveFDs:     context.Int("preserve-fds"),
-	// 	logLevel:        logLevel,
-	// }
-	// return r.run(p)
 }

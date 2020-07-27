@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math/rand"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -272,6 +274,46 @@ func startContainer(context *cli.Context) (int, error) {
 		return -1, err
 	}
 	return 0, nil
+}
+
+func execContainer(context *cli.Context) error {
+	root := context.GlobalString("root")
+	if root == "" {
+		return fmt.Errorf("invalid root")
+	}
+	state, err := loadState(root, context.Args().First())
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command("/proc/self/exe", "exec")
+	process := newProcess(context)
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	err = os.Setenv("EnvExecPid", strconv.Itoa(state.InitProcessPid))
+	err = os.Setenv("EnvExecCmd", strings.Join(process.Args, " "))
+	// 设置环境变量
+	envs := getEnvsByPid(state.InitProcessPid)
+	cmd.Env = append(os.Environ(), envs...)
+
+	if err = cmd.Run(); err != nil {
+		logrus.Errorf("exec cmd run, err: %v", err)
+	}
+	return nil
+}
+
+func getEnvsByPid(pid int) []string {
+	envFilePath := fmt.Sprintf("/proc/%s/environ", strconv.Itoa(pid))
+	file, err := os.Open(envFilePath)
+	if err != nil {
+		logrus.Errorf("open env file, path: %s, err: %v", envFilePath, err)
+		return nil
+	}
+	bs, err := ioutil.ReadAll(file)
+	if err != nil {
+		logrus.Errorf("read env file, err: %v", err)
+	}
+	return strings.Split(string(bs), "\u0000")
 }
 
 func getContainer(context *cli.Context, id string) (*container.Container, error) {

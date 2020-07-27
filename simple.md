@@ -9,3 +9,8 @@
 config.json  // 在 configs.Config 中的序列化文件
 /rootfs      // 可以使挂载 busybus 的文件夹
 ```
+
+- 下载 docker 
+- 生成一个 busybox 的简单镜像
+- docker export tar, untar to /rootfs 等路径，用于挂载
+- 整理文件路径对比，需要确定 readonly writelayer 

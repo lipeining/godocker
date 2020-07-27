@@ -144,7 +144,7 @@ func DeleteWorkSpace(containerName, volume string) error {
 		return err
 	}
 	// 3. 删除宿主机与文件系统映射
-	deleteVolume(containerName, volume)
+	// deleteVolume(containerName, volume)
 	return nil
 }
 
